@@ -88,3 +88,13 @@ body {
   position: absolute;
   display: block;
 }
+
+.successful {
+  color: forestgreen;
+  text-align: center;
+  display: none;
+}
+
+.successful.show {
+  display: block;
+}

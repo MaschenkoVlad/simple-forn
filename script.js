@@ -1,10 +1,10 @@
-document.addEventListener("DOMContentLoaded", function(event) {
+document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM fully loaded and parsed");
     const form = document.querySelector(".form");
 
     const checkLength = (len, selector) => {
         const field = document.querySelector(selector)
-        if (field && field.value.length > len) {
+        if (field && field.value.length >= len) {
             return true
         }
         return false
@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     const checkEmail = (email) => {
         const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(String(email).toLowerCase());
+        return re.test(email);
     }
 
     const checkPasswordsMatch = (pass, confpass) => {
@@ -24,17 +24,24 @@ document.addEventListener("DOMContentLoaded", function(event) {
         return false
     }
 
-    const handleShowError = (errorText, selector) => {
-        const errorMessage = document.querySelector(selector);
-        errorMessage.classList.add("show");
-        const text = document.createTextNode(errorText);
-        errorMessage.appendChild(text);
+    const handleShowError = (formFields, errors, filed) => {
+        const errorTag = document.querySelector(`input#${filed} + .error-msg`);
+        const errorMessage = document.createTextNode(errors[filed]);
+        const field = formFields.find(({id}) => id === filed);
+
+        errorTag.innerHTML = '';
+        field.classList.add("error");
+        errorTag.classList.add("show");
+        errorTag.appendChild(errorMessage);
     }
 
-    const hideError = (selector) => {
-        const errorMessage = document.querySelector(selector);
-        errorMessage.innerHTML = "";
-        errorMessage.classList.remove("show");
+    const hideError = (formFields, filed) => {
+        const errorTag = document.querySelector(`input#${filed} + .error-msg`);
+        const field = formFields.find(({id}) => id === filed);
+
+        field.classList.remove("error");
+        errorTag.innerHTML = "";
+        errorTag.classList.remove("show");
     }
 
     function logSubmit(event) {
@@ -54,9 +61,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     if (isRequire) {
                         const isValid = checkLength(3, '#username');
                         if (!isValid) {
-                            errors[fieldId] = true;
+                            errors[fieldId] = "username must be more then 2 letters";
                         } else {
-                            errors[fieldId] = false;
+                            errors[fieldId] = undefined;
                         }
                     }
                     result[fieldId] = field.value;
@@ -66,9 +73,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     if (isRequire) {
                         const isValid = checkEmail(field.value);
                         if (!isValid) {
-                            errors[fieldId] = true;
+                            errors[fieldId] = "email pattern is invalid";
                         } else {
-                            errors[fieldId] = false;
+                            errors[fieldId] = undefined;
                         }
                     }
                     result[fieldId] = field.value;
@@ -78,9 +85,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     if (isRequire) {
                         const isValid = checkLength(6, '#pass');
                         if (!isValid) {
-                            errors[fieldId] = true;
+                            errors[fieldId] = "password must be more then 5 letters";
                         } else {
-                            errors[fieldId] = false;
+                            errors[fieldId] = undefined;
                         }
                     }
                     result[fieldId] = field.value;
@@ -89,14 +96,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 case "confpass": {
                     if (isRequire) {
                         if (!field.value) {
-                            errors[fieldId] = true;
+                            errors[fieldId] = "confirm password is empty";
                         } else {
-                            const pass = document.querySelector("#pass"); // !!!
+                            const pass = document.querySelector("#pass");
                             const isValid = checkPasswordsMatch(field, pass);
                             if (!isValid) {
-                                errors[fieldId] = true;
+                                errors[fieldId] = "Your entered another password";
                             } else {
-                                errors[fieldId] = false;
+                                errors[fieldId] = undefined;
                             }
                         }
                     }
@@ -110,17 +117,22 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
         }
 
-        if (Object.keys(errors).length !== 0) {
-            for (let key in errors) {
-                const field = formFields.find(el => el.id === key);
-                if (errors[key]) {
-                    field.classList.add("error");
-                    handleShowError("Error", `#${key} + .error-msg`);
-                } else {
-                    field.classList.remove("error");
-                    hideError(`#${key} + .error-msg`);
-                }
+        const errorsLen = Object.values(errors).filter(Boolean).length;
+
+        for (let key in errors) {
+            if (errors[key]) {
+                handleShowError(formFields, errors, key);
+            } else {
+                hideError(formFields, key);
             }
+        }
+
+
+        const successfulTag = document.querySelector(`.successful`);
+        if (errorsLen === 0) {
+            successfulTag.classList.add("show");
+        } else {
+            successfulTag.classList.remove("show");
         }
 
     }
